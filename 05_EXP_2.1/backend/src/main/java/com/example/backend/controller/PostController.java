@@ -18,7 +18,11 @@ import com.example.backend.model.Post;
 import com.example.backend.repository.PostRepository;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175"
+})
 public class PostController {
 
     @Autowired
