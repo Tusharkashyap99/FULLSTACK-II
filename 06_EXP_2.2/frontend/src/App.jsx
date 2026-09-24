@@ -5,6 +5,7 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   // Pagination State
   const [page, setPage] = useState(0);
@@ -12,7 +13,7 @@ function App() {
   const pageSize = 5;
 
   // Backend API URL
-  const API_URL = 'http://localhost:8080/api/tasks';
+  const API_URL = '/api/tasks';
 
   useEffect(() => {
     fetchTasks();
@@ -27,9 +28,11 @@ function App() {
       const data = await response.json();
       setTasks(data.content);
       setTotalPages(data.totalPages);
+      setError('');
       setLoading(false);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setError('Unable to connect to the backend. Make sure it is running on port 8080.');
       setLoading(false);
     }
   };
@@ -44,11 +47,13 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTaskTitle, completed: false })
       });
+      if (!response.ok) throw new Error('Failed to create task');
       await response.json();
       setNewTaskTitle(''); 
       fetchTasks();
     } catch (error) {
       console.error('Error adding task:', error);
+      setError('Unable to add the task. Please try again.');
     }
   };
 
@@ -57,21 +62,25 @@ function App() {
       const response = await fetch(`${API_URL}/${id}/toggle`, {
         method: 'PUT'
       });
+      if (!response.ok) throw new Error('Failed to update task');
       const updatedTask = await response.json();
       setTasks(tasks.map(task => (task.id === id ? updatedTask : task)));
     } catch (error) {
       console.error('Error toggling task:', error);
+      setError('Unable to update the task. Please try again.');
     }
   };
 
   const handleDeleteTask = async (id) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE'
       });
+      if (!response.ok) throw new Error('Failed to delete task');
       fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
+      setError('Unable to delete the task. Please try again.');
     }
   };
 
@@ -130,6 +139,11 @@ function App() {
           <div className="loading-container">
             <div className="spinner"></div>
             <p className="loading-text">Fetching tasks from H2 Database...</p>
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <p className="empty-text">{error}</p>
+            <button type="button" className="page-button" onClick={fetchTasks}>Retry</button>
           </div>
         ) : (
           <div className="task-list">
